@@ -125,6 +125,9 @@ h1,h2,h3,h4{margin:0; line-height:1.22; font-weight:700; letter-spacing:-.012em;
 .tbtn:hover{background:var(--surface-3); color:var(--ink); border-color:var(--line-2)}
 .tbtn[aria-pressed="true"]{background:var(--brand-2); color:#fff; border-color:var(--brand-2)}
 .tbtn svg{width:15px; height:15px}
+.npdt-acesso{opacity:.32}
+.npdt-acesso:hover{opacity:.85}
+.npdt-acesso img{display:block}
 .sec-title{font-family:var(--display); font-size:12px; font-weight:700; letter-spacing:.09em; text-transform:uppercase; color:var(--ink-3);
   margin:30px 0 13px; display:flex; align-items:center; gap:11px}
 .sec-title::after{content:''; flex:1; height:1px; background:var(--line)}
@@ -355,6 +358,11 @@ body.inicio .hero{padding-bottom:16px}
   font-family:var(--display);letter-spacing:.05em;text-transform:uppercase;color:var(--good)}
 .vis svg{width:13px;height:13px}
 .vis[data-priv="1"]{color:var(--c2);border-color:color-mix(in srgb,var(--c2) 45%,transparent);background:color-mix(in srgb,var(--c2) 9%,transparent)}
+.vismini{position:absolute;top:7px;right:7px;appearance:none;border:0;background:none;cursor:pointer;color:var(--ink-3);
+  width:20px;height:20px;display:grid;place-items:center;border-radius:6px;padding:0;z-index:2}
+.vismini:hover{background:var(--surface-3);color:var(--ink)}
+.vismini svg{width:12px;height:12px}
+.vismini[data-priv="1"]{color:var(--c2)}
 .card.privado{border:1px dashed var(--c2);background:linear-gradient(0deg,rgba(226,112,10,.035),rgba(226,112,10,.035)),var(--surface)}
 .card{position:relative}
 .badge-priv{position:absolute;top:-9px;right:16px;background:var(--c2);color:#fff;font-family:var(--display);font-size:9.5px;
@@ -671,6 +679,24 @@ function seletor(t,id,rot){
     (p?'Este item não aparece na versão pública. Clique para torná-lo público.':'Este item aparece para todos. Clique para torná-lo privado.')+'">'+
     (p?OLHOX:OLHO)+(rot||(p?'Privado':'Público'))+'</button>';
 }
+function seletorMini(t,id){
+  if(!ADM) return '';
+  const p=ehPriv(t,id);
+  return '<button class="vismini" data-priv="'+(p?1:0)+'" data-vt="'+t+'" data-vid="'+id+'" data-tip="'+
+    (p?'Este item não aparece na versão pública. Clique para torná-lo público.':'Este item aparece para todos. Clique para torná-lo privado.')+'">'+(p?OLHOX:OLHO)+'</button>';
+}
+function kpiTile(id, cor, lab, val, subHtml){
+  if(!verVisivel('blocos',id)) return '';
+  const p=ADM&&ehPriv('blocos',id);
+  return '<div class="kpi'+(p?' privado':'')+'" style="--kc:'+cor+'">'+
+    (p?'<span class="badge-priv" style="top:-8px;right:8px">PRIVADO</span>':'')+
+    seletorMini('blocos',id)+
+    '<div class="k-lab">'+lab+'</div><div class="k-val">'+val+'</div>'+(subHtml||'')+'</div>';
+}
+function kpisWrap(tiles){
+  const t=tiles.filter(Boolean);
+  return t.length? '<div class="kpis">'+t.join('')+'</div>' : '';
+}
 function barraAdmin(){
   if(!ADM) return '';
   const n=Object.keys(PRIV.blocos).length+Object.keys(PRIV.secoes).length+Object.keys(PRIV.abas).length;
@@ -979,11 +1005,7 @@ const ESC5C=['#B3392C','#DE8A57','#C3CCD2','#6FA98C','#2E7D4F'];
 function textosSug(){
   const T=MICRO.sugtxt||[];
   if(!T.length) return '';
-  if(!verVisivel('extras','sugtxt')){
-    return '<div class="card" style="text-align:center;padding:28px 16px">'+
-      '<p class="sub" style="margin:0 0 12px">Dados técnicos de uso interno.</p>'+
-      '<button class="abtn pri" data-abrelogin="1">Acesso restrito</button></div>';
-  }
+  if(!verVisivel('extras','sugtxt')) return '';
   return '<div class="tblwrap" style="max-height:440px;overflow:auto">'+
     (ADM?'<div style="padding:8px 0">'+seletor('extras','sugtxt','Texto das sugestões')+'</div>':'')+
     '<table><thead><tr><th>O que os visitantes escreveram</th></tr></thead><tbody>'+
@@ -1364,7 +1386,8 @@ function cardVis(v,foco){
   const podeDrill=!!HIER[v.campo] && ['mapabr','mapauf','mundo','mv','stack','npsdist','temas','arcos','npsseg','gastorenda'].indexOf(v.tipo)<0, drilled=!!S.drill[v.campo];
   const tools='<div class="tools">'+
     (podeDrill?'<button class="tbtn" data-drill="'+v.campo+'" aria-pressed="'+drilled+'" data-tip="'+(drilled?'Voltar ao nível agrupado (drill up)':'Detalhar (drill down)')+'">'+ic(drilled?'up':'down')+'</button>':'')+
-    (foco?'':'<button class="tbtn" data-foco="'+v.id+'" data-tip="Modo de foco">'+ic('foco')+'</button>')+'</div>';
+    (foco?'':'<button class="tbtn" data-foco="'+v.id+'" data-tip="Modo de foco">'+ic('foco')+'</button>')+
+    (ADM?'':'<button class="tbtn npdt-acesso" data-abrelogin="1" aria-label="NPDT"><img src="'+LOGOS.npdt+'" alt="" style="width:13px;height:13px;object-fit:contain"></button>')+'</div>';
   const pv=ADM&&ehPriv('blocos',v.id);
   return '<div class="card'+(pv?' privado':'')+'">'+(pv?'<span class="badge-priv">PRIVADO</span>':'')+
     '<header><h3>'+v.tit+'</h3>'+(v.badge?badge(v.badge):'')+(foco?'':seletor('blocos',v.id))+tools+'</header>'+
@@ -1527,18 +1550,19 @@ function pgVisao(){
   const av25=medias(r25).filter(a=>a.media!=null);
   const mg25=av25.length? av25.reduce((s,a)=>s+a.media,0)/av25.length : null;
   const pv26=pctDe(dist('pv',r26),'Sim'), pv25=pctDe(dist('pv',r25),'Sim');
-  const kpis='<div class="kpis">'+
-    '<div class="kpi" style="--kc:var(--c2)"><div class="k-lab">Gasto médio diário por pessoa</div><div class="k-val">'+(gm?RS(gm.media):'—')+'</div>'+
-      '<div class="k-sub">'+(gm?'em reais, por pessoa':'não medido em 2025')+'</div></div>'+
-    '<div class="kpi" style="--kc:var(--c3)"><div class="k-lab">Recomendação do destino (NPS)</div><div class="k-val">'+(np?(np.score>0?'+':'')+np.score:'—')+'</div>'+
-      '<div class="k-sub">'+(np?'nota média '+DEC(np.media,1):'não medido em 2025')+'</div></div>'+
-    '<div class="kpi" style="--kc:var(--c4)"><div class="k-lab">Avaliação média da infraestrutura</div><div class="k-val">'+DEC(mg)+'<small> / 5</small></div>'+
-      '<div class="k-sub">'+((c&&mg25)?'2025: '+DEC(mg25):'média dos itens avaliados')+'</div></div>'+
-    '<div class="kpi" style="--kc:var(--c5)"><div class="k-lab">Visitando pela primeira vez</div><div class="k-val">'+PC(pv26)+'</div>'+
-      (c?delta(pv25,pv26):'<div class="k-sub">'+PC(pv26==null?null:100-pv26)+' já haviam visitado</div>')+'</div>'+
-    '<div class="kpi" style="--kc:var(--c1)"><div class="k-lab">Vieram a lazer</div><div class="k-val">'+PC(pctDe(dist('mot',r26),'Férias, lazer, sol e praia'))+'</div>'+
-      (c?delta(pctDe(dist('mot',r25),'Férias, lazer, sol e praia'),pctDe(dist('mot',r26),'Férias, lazer, sol e praia')):'<div class="k-sub">principal motivo declarado</div>')+'</div></div>';
-  return phead(PG.visao)+slicers()+blocoKpis('kpi-visao',kpis)+defsVisao().map(secao).join('')+rodape('painel');
+  const kpis=kpisWrap([
+    kpiTile('kpi-visao-gasto','var(--c2)','Gasto médio diário por pessoa',(gm?RS(gm.media):'—'),
+      '<div class="k-sub">'+(gm?'em reais, por pessoa':'não medido em 2025')+'</div>'),
+    kpiTile('kpi-visao-nps','var(--c3)','Recomendação do destino (NPS)',(np?(np.score>0?'+':'')+np.score:'—'),
+      '<div class="k-sub">'+(np?'nota média '+DEC(np.media,1):'não medido em 2025')+'</div>'),
+    kpiTile('kpi-visao-infra','var(--c4)','Avaliação média da infraestrutura',DEC(mg)+'<small> / 5</small>',
+      '<div class="k-sub">'+((c&&mg25)?'2025: '+DEC(mg25):'média dos itens avaliados')+'</div>'),
+    kpiTile('kpi-visao-primeira','var(--c5)','Visitando pela primeira vez',PC(pv26),
+      (c?delta(pv25,pv26):'<div class="k-sub">'+PC(pv26==null?null:100-pv26)+' já haviam visitado</div>')),
+    kpiTile('kpi-visao-lazer','var(--c1)','Vieram a lazer',PC(pctDe(dist('mot',r26),'Férias, lazer, sol e praia')),
+      (c?delta(pctDe(dist('mot',r25),'Férias, lazer, sol e praia'),pctDe(dist('mot',r26),'Férias, lazer, sol e praia')):'<div class="k-sub">principal motivo declarado</div>'))
+  ]);
+  return phead(PG.visao)+slicers()+kpis+defsVisao().map(secao).join('')+rodape('painel');
 }
 
 function defsDemanda(){
@@ -1610,16 +1634,17 @@ function pgDemanda(){
   const r26=c?rows.filter(r=>r[0]===2026):rows, r25=rows.filter(r=>r[0]===2025);
   const gm=gastoMedio(r26);
   const p=(f,l,rs)=>pctDe(dist(f,rs||r26),l);
-  const kpis='<div class="kpis">'+
-    '<div class="kpi" style="--kc:var(--c1)"><div class="k-lab">Viajando acompanhado</div><div class="k-val">'+PC(p('cqa','Acompanhado(a)'))+'</div>'+
-      (c?delta(p('cqa','Acompanhado(a)',r25),p('cqa','Acompanhado(a)')):'')+'</div>'+
-    '<div class="kpi" style="--kc:var(--c3)"><div class="k-lab">Motivo férias / lazer</div><div class="k-val">'+PC(p('mot','Férias, lazer, sol e praia'))+'</div>'+
-      (c?delta(p('mot','Férias, lazer, sol e praia',r25),p('mot','Férias, lazer, sol e praia')):'')+'</div>'+
-    '<div class="kpi" style="--kc:var(--c4)"><div class="k-lab">Chegaram de avião</div><div class="k-val">'+PC(p('tra','Avião'))+'</div>'+
-      (c?delta(p('tra','Avião',r25),p('tra','Avião')):'')+'</div>'+
-    '<div class="kpi" style="--kc:var(--c5)"><div class="k-lab">Gasto médio diário</div><div class="k-val">'+(gm?RS(gm.media):'—')+'</div>'+
-      '<div class="k-sub">'+(gm?'em reais, por pessoa':'não medido em 2025')+'</div></div></div>';
-  return phead(PG.demanda)+slicers()+blocoKpis('kpi-demanda',kpis)+defsDemanda().map(secao).join('')+rodape('painel');
+  const kpis=kpisWrap([
+    kpiTile('kpi-demanda-acompanhado','var(--c1)','Viajando acompanhado',PC(p('cqa','Acompanhado(a)')),
+      c?delta(p('cqa','Acompanhado(a)',r25),p('cqa','Acompanhado(a)')):''),
+    kpiTile('kpi-demanda-lazer','var(--c3)','Motivo férias / lazer',PC(p('mot','Férias, lazer, sol e praia')),
+      c?delta(p('mot','Férias, lazer, sol e praia',r25),p('mot','Férias, lazer, sol e praia')):''),
+    kpiTile('kpi-demanda-aviao','var(--c4)','Chegaram de avião',PC(p('tra','Avião')),
+      c?delta(p('tra','Avião',r25),p('tra','Avião')):''),
+    kpiTile('kpi-demanda-gasto','var(--c5)','Gasto médio diário',(gm?RS(gm.media):'—'),
+      '<div class="k-sub">'+(gm?'em reais, por pessoa':'não medido em 2025')+'</div>')
+  ]);
+  return phead(PG.demanda)+slicers()+kpis+defsDemanda().map(secao).join('')+rodape('painel');
 }
 
 function pgPlaceholder(p,itens,fontes){
@@ -1711,7 +1736,8 @@ function render(){
     '<button class="tab" data-go="abertura" style="--tabc:var(--brand-2)" aria-current="'+(S.page==='abertura')+'">'+
       '<span class="dot" style="background:var(--brand-2)"></span>Início</button>'+
     VIS_PAGES.map(x=>'<button class="tab" data-go="'+x.id+'" style="--tabc:'+x.cor+'" aria-current="'+(x.id===S.page)+'">'+
-      '<span class="dot" style="background:'+x.cor+'"></span>'+x.nome+(x.pronto?'':'<span class="soon">EM BREVE</span>')+'</button>').join('');
+      '<span class="dot" style="background:'+x.cor+'"></span>'+x.nome+(x.pronto?'':'<span class="soon">EM BREVE</span>')+'</button>'+
+      (ADM?seletor('abas',x.id, ehPriv('abas',x.id)?'Aba privada':'Aba pública'):'')).join('');
   let h;
   if(S.page==='visao') h=pgVisao();
   else if(S.page==='demanda') h=pgDemanda();
